@@ -3,9 +3,7 @@ import numpy as np
 import os
 
 
-# =========================
-# ELA FUNCTION
-# =========================
+# ELA Fun
 def detect_tampering_ela(input_path, quality=90):
     original = cv2.imread(input_path)
 
@@ -31,9 +29,7 @@ def detect_tampering_ela(input_path, quality=90):
     return ela
 
 
-# =========================
-# DASHBOARD FUNCTION
-# =========================
+# Dashboard 
 def create_dashboard(original, ela, thresh, output):
     h, w = original.shape[:2]
     size = (400, 400)
@@ -71,9 +67,8 @@ def create_dashboard(original, ela, thresh, output):
     return dashboard
 
 
-# =========================
-# MAIN PIPELINE
-# =========================
+# Main 
+
 def analyze_image(path):
     original = cv2.imread(path)
 
@@ -81,23 +76,23 @@ def analyze_image(path):
         print("Error: Image not found")
         return
 
-    # --- ELA ---
+    # ELA 
     ela = detect_tampering_ela(path, quality=90)
 
-    # --- Grayscale ---
+    # Grayscale
     gray = cv2.cvtColor(ela, cv2.COLOR_BGR2GRAY)
 
-    # --- Heatmap (Better Visualization) ---
+    # Heatmap 
     ela_heatmap = cv2.applyColorMap(gray, cv2.COLORMAP_JET)
 
-    # --- Threshold ---
+    # Threshold
     _, thresh = cv2.threshold(gray, 50, 255, cv2.THRESH_BINARY)
 
-    # --- Noise Removal ---
+    # Noise Removal
     kernel = np.ones((3, 3), np.uint8)
     thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
 
-    # --- Contours (Cut Step) ---
+    # Contours 
     contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     output = original.copy()
@@ -107,7 +102,6 @@ def analyze_image(path):
             x, y, w, h = cv2.boundingRect(c)
             cv2.rectangle(output, (x, y), (x + w, y + h), (0, 0, 255), 2)
 
-    # --- Decision Metric ---
     suspicious_pixels = np.sum(thresh == 255)
     total_pixels = thresh.size
     ratio = suspicious_pixels / total_pixels
@@ -122,16 +116,12 @@ def analyze_image(path):
     print(f"Decision: {decision}")
     print("=================================")
 
-    # --- Dashboard ---
     dashboard = create_dashboard(original, ela_heatmap, thresh, output)
 
     cv2.imshow("Image Tampering Detection System", dashboard)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-
-# =========================
 # RUN
-# =========================
 if __name__ == "__main__":
     analyze_image("test.jpg")
